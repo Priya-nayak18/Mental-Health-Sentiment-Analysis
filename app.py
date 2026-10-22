@@ -24,8 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "Combined Data.csv"
 BUNDLE_PATH = BASE_DIR / "mental_health_model_bundle.joblib"
 
-# Replace this with the ID from your Google Drive sharing link.
-# Example link: https://drive.google.com/file/d/FILE_ID/view
+# Google Drive CSV file ID
 GOOGLE_DRIVE_FILE_ID = "1bo432nn1YkbnS7G8QChCtJgZcueyUQE9"
 
 
@@ -70,43 +69,55 @@ def clean_text(text):
 # ---------------- DATASET LOADING ----------------
 @st.cache_data(show_spinner=False)
 def load_dataset():
-    if not DATA_PATH.exists():
-        if (
-            not GOOGLE_DRIVE_FILE_ID
-            or GOOGLE_DRIVE_FILE_ID == "PASTE_YOUR_FILE_ID_HERE"
-        ):
-            raise RuntimeError(
-                "Please set GOOGLE_DRIVE_FILE_ID in app.py "
-                "to your Google Drive CSV file ID."
-            )
+    DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-        DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Download the CSV if it is missing or empty.
+    if not DATA_PATH.exists() or DATA_PATH.stat().st_size == 0:
+        if not GOOGLE_DRIVE_FILE_ID:
+            raise RuntimeError("Google Drive file ID is missing.")
+
         download_url = (
             f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}"
         )
 
-        with st.spinner("Downloading the dataset from Google Drive..."):
-            result = gdown.download(
-                url=download_url,
-                output=str(DATA_PATH),
-                quiet=False,
-            )
+        try:
+            with st.spinner("Downloading dataset from Google Drive..."):
+                result = gdown.download(
+                    url=download_url,
+                    output=str(DATA_PATH),
+                    quiet=False,
+                    fuzzy=True,
+                )
+        except Exception as exc:
+            raise RuntimeError(
+                f"Dataset download failed: {exc}"
+            ) from exc
 
         if result is None or not DATA_PATH.exists():
             raise RuntimeError(
-                "Dataset download failed. Check the Google Drive "
-                "file ID and sharing permissions."
+                "Dataset download failed. Check the Google Drive file ID, "
+                "sharing permissions, and download limits."
             )
 
-    raw = pd.read_csv(DATA_PATH)
+    # Read the CSV.
+    try:
+        raw = pd.read_csv(DATA_PATH)
+    except Exception as exc:
+        raise RuntimeError(
+            "Could not read the dataset as a CSV. Check that the Drive "
+            "file is the correct CSV and downloaded completely."
+        ) from exc
+
     raw = raw.drop(columns=["Unnamed: 0"], errors="ignore")
 
     required = {"statement", "status"}
     if not required.issubset(raw.columns):
         raise ValueError(
-            "The CSV must contain 'statement' and 'status' columns."
+            "The CSV must contain 'statement' and 'status' columns. "
+            f"Columns found: {list(raw.columns)}"
         )
 
+    # Clean dataset rows.
     raw = raw.dropna(subset=["statement", "status"]).copy()
     raw["statement"] = raw["statement"].astype(str).str.strip()
     raw["status"] = raw["status"].astype(str).str.strip()
@@ -123,26 +134,36 @@ def load_dataset():
     raw = raw[raw["clean_statement"].str.len() > 0].copy()
     raw["word_count"] = raw["clean_statement"].str.split().str.len()
 
+    if raw.empty:
+        raise ValueError("The dataset contains no valid records.")
+
     return raw.reset_index(drop=True)
 
 
 # ---------------- MODEL LOADING / TRAINING ----------------
 @st.cache_resource(show_spinner=False)
 def load_or_train_model():
-    # Try the saved model bundle first.
+    # Load a saved model bundle if it is available.
     if BUNDLE_PATH.exists():
         try:
             bundle = joblib.load(BUNDLE_PATH)
+
             required_keys = {
                 "model",
                 "tfidf_vectorizer",
                 "feature_type",
             }
-            if required_keys.issubset(bundle.keys()):
+
+            if (
+                isinstance(bundle, dict)
+                and required_keys.issubset(bundle.keys())
+            ):
                 return bundle
+
         except Exception:
             pass
 
+    # Train a new model if no usable saved bundle exists.
     df = load_dataset()
 
     if df.empty or df["status"].nunique() < 2:
@@ -166,6 +187,7 @@ def load_or_train_model():
         class_weight="balanced",
         random_state=42,
     )
+
     model.fit(X, y)
 
     bundle = {
@@ -177,7 +199,11 @@ def load_or_train_model():
         "labels": sorted(y.unique()),
     }
 
-    joblib.dump(bundle, BUNDLE_PATH)
+    try:
+        joblib.dump(bundle, BUNDLE_PATH)
+    except Exception:
+        pass
+
     return bundle
 
 
@@ -209,9 +235,8 @@ try:
 except Exception as exc:
     st.error(f"Could not load the dataset: {exc}")
     st.info(
-        "Check your Google Drive file ID, sharing settings, "
-        "and internet access. Confirm that the CSV contains "
-        "'statement' and 'status' columns."
+        "Check your Google Drive file ID and sharing permissions. "
+        "Confirm that the CSV contains 'statement' and 'status' columns."
     )
     st.stop()
 
@@ -226,6 +251,7 @@ if page == "Home":
     """, unsafe_allow_html=True)
 
     c1, c2, c3 = st.columns(3)
+
     c1.metric("Records after cleaning", f"{len(df):,}")
     c2.metric("Dataset categories", f"{df['status'].nunique():,}")
     c3.metric(
@@ -234,17 +260,17 @@ if page == "Home":
     )
 
     st.subheader("How it works")
+
     st.markdown("""
     1. Enter a text statement on the **Predict** page.
     2. The text is cleaned using the same function as the notebook.
-    3. TF-IDF converts the text into numerical features.
-    4. Logistic Regression predicts one of the dataset's categories.
+    3. TF-IDF converts text into numerical features.
+    4. Logistic Regression predicts a category from the dataset.
     """)
 
     st.info(
         "The first prediction may take some time because the model "
-        "may need to be trained. Later predictions can reuse the "
-        "saved model while that file remains available."
+        "may need to be trained. A saved model may be reused when available."
     )
 
 
@@ -275,18 +301,22 @@ elif page == "Predict":
                 ):
                     bundle = load_or_train_model()
                     cleaned = clean_text(statement)
+
                     features = bundle["tfidf_vectorizer"].transform(
                         [cleaned]
                     )
+
                     prediction = bundle["model"].predict(features)[0]
 
                 st.success(
                     f"Predicted dataset category: **{prediction}**"
                 )
+
                 st.caption(
                     "Model used: "
                     f"{bundle.get('model_name', 'Logistic Regression')}"
                 )
+
                 st.warning(
                     "This is a text-classification prediction, not a "
                     "diagnosis. It may be incorrect and should not be "
@@ -302,6 +332,7 @@ elif page == "Dataset Overview":
     st.title("📊 Dataset Overview")
 
     c1, c2, c3, c4 = st.columns(4)
+
     c1.metric("Records after cleaning", f"{len(df):,}")
     c2.metric("Categories", f"{df['status'].nunique():,}")
     c3.metric("Unique statements", f"{df['statement'].nunique():,}")
@@ -318,13 +349,16 @@ elif page == "Dataset Overview":
 
     fig, ax = plt.subplots(figsize=(9, 5))
     sns.barplot(data=counts, x="Count", y="Category", ax=ax)
+
     ax.set_xlabel("Number of statements")
     ax.set_ylabel("")
     fig.tight_layout()
+
     st.pyplot(fig)
     plt.close(fig)
 
     st.subheader("Sample records")
+
     st.dataframe(
         df[["statement", "status", "word_count"]].head(15),
         use_container_width=True,
@@ -345,7 +379,7 @@ elif page == "Model Information":
     Regression as the best model using Macro F1-score on its held-out
     test set.
 
-    The notebook's recorded classification results are approximately:
+    Recorded notebook results:
 
     - Accuracy: **0.77**
     - Macro F1-score: **0.71**
@@ -427,6 +461,7 @@ elif page == "Model Evaluation":
     ])
 
     st.subheader("Comparison of six machine-learning models")
+
     st.dataframe(
         comparison.style.format({
             "Accuracy": "{:.4f}",
@@ -441,9 +476,11 @@ elif page == "Model Evaluation":
     )
 
     st.subheader("Macro F1-score comparison")
+
     chart_df = comparison[
         ["Model", "F1 Score (Macro)"]
     ].set_index("Model")
+
     st.bar_chart(chart_df)
 
     st.subheader("Classification report — Logistic Regression")
