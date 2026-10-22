@@ -53,20 +53,25 @@ st.markdown(
         background: #f0efff;
     }
 
-    .hero {
-        padding: 1.6rem;
-        border-radius: 18px;
-        background: linear-gradient(
-            120deg,
-            #e9e7ff,
-            #e5f7f4
-        );
-        border: 1px solid #e0defb;
-        margin-bottom: 1rem;
+    .main-title {
+        font-size: 42px;
+        font-weight: 700;
+        color: #25275f;
+        margin-bottom: 5px;
     }
 
-    .hero h1 {
-        color: #25275f;
+    .subtitle {
+        font-size: 19px;
+        color: #666b85;
+        margin-bottom: 25px;
+    }
+
+    .info-box {
+        padding: 20px;
+        border-radius: 15px;
+        background: #ffffff;
+        border: 1px solid #e0defb;
+        margin-bottom: 20px;
     }
 
     div.stButton > button {
@@ -75,6 +80,11 @@ st.markdown(
         background: #625cf6;
         color: white;
         border: 0;
+    }
+
+    div.stButton > button:hover {
+        background: #514be5;
+        color: white;
     }
 
     </style>
@@ -89,7 +99,7 @@ st.markdown(
 
 def clean_text(text):
     """
-    Clean a text statement before sending it to the model.
+    Clean input text before sending it to the model.
     """
 
     text = str(text).lower()
@@ -101,7 +111,7 @@ def clean_text(text):
         text
     )
 
-    # Normalize whitespace
+    # Remove extra whitespace
     text = re.sub(
         r"\s+",
         " ",
@@ -112,48 +122,27 @@ def clean_text(text):
 
 
 # ============================================================
-# DOWNLOAD DATASET FROM GOOGLE DRIVE
+# DATASET LOADING
 # ============================================================
 
-def download_dataset():
-    """
-    Download the CSV dataset from Google Drive.
-
-    Uses gdown without the unsupported 'fuzzy' parameter.
-    """
+@st.cache_data(show_spinner=False)
+def load_dataset():
 
     DATA_DIR.mkdir(
         parents=True,
         exist_ok=True
     )
 
-    if not GOOGLE_DRIVE_FILE_ID:
-        raise RuntimeError(
-            "Google Drive file ID is missing."
-        )
+    # --------------------------------------------------------
+    # Download dataset if it does not exist
+    # --------------------------------------------------------
 
-    try:
+    if not DATA_PATH.exists() or DATA_PATH.stat().st_size == 0:
 
-        with st.spinner(
-            "Downloading dataset from Google Drive..."
-        ):
-
-            # IMPORTANT:
-            # Do NOT use fuzzy=True here.
-            # The deployed gdown version does not support it.
-            result = gdown.download(
-                id=GOOGLE_DRIVE_FILE_ID,
-                output=str(DATA_PATH),
-                quiet=False,
+        if not GOOGLE_DRIVE_FILE_ID:
+            raise RuntimeError(
+                "Google Drive file ID is missing."
             )
-
-    except TypeError:
-
-        # Compatibility fallback for older gdown versions.
-        download_url = (
-            f"https://drive.google.com/uc?"
-            f"id={GOOGLE_DRIVE_FILE_ID}"
-        )
 
         try:
 
@@ -162,61 +151,28 @@ def download_dataset():
             ):
 
                 result = gdown.download(
-                    download_url,
-                    str(DATA_PATH),
+                    id=GOOGLE_DRIVE_FILE_ID,
+                    output=str(DATA_PATH),
                     quiet=False,
                 )
 
         except Exception as exc:
+
             raise RuntimeError(
                 f"Dataset download failed: {exc}"
             ) from exc
 
-    except Exception as exc:
+        if (
+            result is None
+            or not DATA_PATH.exists()
+            or DATA_PATH.stat().st_size == 0
+        ):
 
-        raise RuntimeError(
-            f"Dataset download failed: {exc}"
-        ) from exc
-
-    # Check download result
-    if (
-        result is None
-        or not DATA_PATH.exists()
-        or DATA_PATH.stat().st_size == 0
-    ):
-
-        # Remove incomplete file if one exists
-        if DATA_PATH.exists():
-            try:
-                DATA_PATH.unlink()
-            except Exception:
-                pass
-
-        raise RuntimeError(
-            "Dataset download failed. Please make sure the "
-            "Google Drive file is shared as 'Anyone with the link' "
-            "and that the file ID is correct."
-        )
-
-    return DATA_PATH
-
-
-# ============================================================
-# LOAD DATASET
-# ============================================================
-
-@st.cache_data(show_spinner=False)
-def load_dataset():
-
-    # --------------------------------------------------------
-    # Download dataset if it doesn't exist
-    # --------------------------------------------------------
-
-    if (
-        not DATA_PATH.exists()
-        or DATA_PATH.stat().st_size == 0
-    ):
-        download_dataset()
+            raise RuntimeError(
+                "Dataset download failed. "
+                "Please check the Google Drive file ID "
+                "and sharing permissions."
+            )
 
     # --------------------------------------------------------
     # Read CSV
@@ -230,20 +186,13 @@ def load_dataset():
 
     except Exception as exc:
 
-        # If downloaded file is invalid, remove it and try again
-        try:
-            DATA_PATH.unlink()
-        except Exception:
-            pass
-
         raise RuntimeError(
-            "The downloaded Google Drive file could not be "
-            "read as a CSV. Make sure your Google Drive file "
-            "is the correct CSV dataset."
+            "Could not read the downloaded file as a CSV. "
+            "Make sure the Google Drive file is the correct CSV."
         ) from exc
 
     # --------------------------------------------------------
-    # Remove unwanted index column
+    # Remove unnecessary index column
     # --------------------------------------------------------
 
     raw = raw.drop(
@@ -257,7 +206,7 @@ def load_dataset():
 
     required_columns = {
         "statement",
-        "status",
+        "status"
     }
 
     if not required_columns.issubset(
@@ -265,8 +214,8 @@ def load_dataset():
     ):
 
         raise ValueError(
-            "The CSV must contain 'statement' and 'status' "
-            "columns.\n\n"
+            "The CSV must contain the columns "
+            "'statement' and 'status'. "
             f"Columns found: {list(raw.columns)}"
         )
 
@@ -281,9 +230,7 @@ def load_dataset():
         ]
     ).copy()
 
-    # --------------------------------------------------------
     # Convert to strings
-    # --------------------------------------------------------
 
     raw["statement"] = (
         raw["statement"]
@@ -319,7 +266,7 @@ def load_dataset():
     ).copy()
 
     # --------------------------------------------------------
-    # Clean statements
+    # Clean text
     # --------------------------------------------------------
 
     raw["clean_statement"] = (
@@ -327,9 +274,7 @@ def load_dataset():
         .apply(clean_text)
     )
 
-    # --------------------------------------------------------
     # Remove empty cleaned statements
-    # --------------------------------------------------------
 
     raw = raw[
         raw["clean_statement"].str.len() > 0
@@ -355,13 +300,6 @@ def load_dataset():
             "The dataset contains no valid records."
         )
 
-    if raw["status"].nunique() < 2:
-
-        raise ValueError(
-            "The dataset must contain at least "
-            "two different categories."
-        )
-
     return raw.reset_index(
         drop=True
     )
@@ -375,7 +313,7 @@ def load_dataset():
 def load_or_train_model():
 
     # --------------------------------------------------------
-    # Try loading an existing model
+    # Try loading saved model
     # --------------------------------------------------------
 
     if BUNDLE_PATH.exists():
@@ -402,6 +340,9 @@ def load_or_train_model():
                 return bundle
 
         except Exception:
+
+            # If saved model cannot be loaded,
+            # train a new model.
             pass
 
     # --------------------------------------------------------
@@ -480,6 +421,7 @@ def load_or_train_model():
         )
 
     except Exception:
+
         pass
 
     return bundle
@@ -490,12 +432,18 @@ def load_or_train_model():
 # ============================================================
 
 st.sidebar.markdown(
-    "# 🧠 Mental Health Sentiment Analysis"
+    "# 🧠 Mental Health"
+)
+
+st.sidebar.markdown(
+    "## Sentiment Analysis"
 )
 
 st.sidebar.caption(
     "Text Analysis Using Machine Learning and NLP"
 )
+
+st.sidebar.markdown("---")
 
 page = st.sidebar.radio(
     "Navigate",
@@ -531,9 +479,9 @@ except Exception as exc:
     )
 
     st.info(
-        "Make sure your Google Drive CSV is shared as "
-        "'Anyone with the link' and that the CSV contains "
-        "'statement' and 'status' columns."
+        "Please check your Google Drive file ID, "
+        "sharing permissions, and confirm that "
+        "the CSV contains 'statement' and 'status' columns."
     )
 
     st.stop()
@@ -546,21 +494,38 @@ except Exception as exc:
 if page == "Home":
 
     st.markdown(
+        '<div class="main-title">'
+        '🧠 Mental Health Sentiment Analysis'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="subtitle">'
+        'Text Analysis Using Machine Learning and NLP'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
         """
-        <div class="hero">
+        <div class="info-box">
 
-            <h1>
-                🧠 Welcome to Mental Health Sentiment Analysis
-            </h1>
+        <b>Welcome!</b>
 
-            <p>
-                Text Analysis Using Machine Learning and NLP
-            </p>
+        <br><br>
+
+        This application demonstrates text classification
+        using TF-IDF and Logistic Regression.
 
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
+
+    # --------------------------------------------------------
+    # Metrics
+    # --------------------------------------------------------
 
     c1, c2, c3 = st.columns(3)
 
@@ -579,22 +544,35 @@ if page == "Home":
         f"{df['word_count'].mean():.1f}"
     )
 
-    st.subheader(
+    st.header(
         "How it works"
     )
 
     st.markdown(
         """
-        1. Enter a text statement on the **Predict** page.
-        2. The text is cleaned using the same preprocessing function.
-        3. TF-IDF converts the text into numerical features.
-        4. Logistic Regression predicts a category from the dataset.
+        **1. Enter a statement**
+
+        Go to the **Predict** page and enter a text statement.
+
+        **2. Text preprocessing**
+
+        The text is converted to lowercase and URLs and
+        unnecessary whitespace are removed.
+
+        **3. TF-IDF**
+
+        TF-IDF converts the text into numerical features.
+
+        **4. Machine Learning**
+
+        Logistic Regression predicts one of the categories
+        found in the dataset.
         """
     )
 
     st.info(
         "The first prediction may take some time because "
-        "the model may need to be trained. After that, "
+        "the model may need to be trained. After training, "
         "the saved model can be reused."
     )
 
@@ -605,32 +583,29 @@ if page == "Home":
 
 elif page == "Predict":
 
-    st.markdown(
-        """
-        <div class="hero">
-
-            <h1>
-                💬 Enter a text statement
-            </h1>
-
-            <p>
-                Analyze text using Machine Learning and NLP.
-            </p>
-
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.title(
+        "💬 Predict Mental Health Category"
     )
+
+    st.write(
+        "Enter a text statement below and the machine-learning "
+        "model will predict its dataset category."
+    )
+
+    st.markdown("---")
 
     statement = st.text_area(
         "Your statement",
-        placeholder="Type a statement here...",
+        placeholder=(
+            "Example: I have been feeling worried and "
+            "unable to concentrate recently."
+        ),
         height=180,
         max_chars=5000,
     )
 
     if st.button(
-        "Predict category",
+        "🔍 Predict Category",
         use_container_width=True
     ):
 
@@ -645,8 +620,7 @@ elif page == "Predict":
             try:
 
                 with st.spinner(
-                    "Loading or training the model. "
-                    "The first run may take a while..."
+                    "Loading or training the model..."
                 ):
 
                     bundle = load_or_train_model()
@@ -675,16 +649,69 @@ elif page == "Predict":
 
                 st.caption(
                     "Model used: "
-                    f"{bundle.get(
-                        'model_name',
-                        'Logistic Regression'
-                    )}"
+                    f"{bundle.get('model_name', 'Logistic Regression')}"
                 )
+
+                # ------------------------------------------------
+                # Prediction probabilities
+                # ------------------------------------------------
+
+                model = bundle["model"]
+
+                if hasattr(
+                    model,
+                    "predict_proba"
+                ):
+
+                    probabilities = (
+                        model
+                        .predict_proba(
+                            features
+                        )[0]
+                    )
+
+                    classes = model.classes_
+
+                    probability_df = pd.DataFrame(
+                        {
+                            "Category": classes,
+                            "Probability": probabilities,
+                        }
+                    )
+
+                    probability_df = (
+                        probability_df
+                        .sort_values(
+                            "Probability",
+                            ascending=False
+                        )
+                        .reset_index(
+                            drop=True
+                        )
+                    )
+
+                    probability_df[
+                        "Probability"
+                    ] = probability_df[
+                        "Probability"
+                    ].map(
+                        lambda x: f"{x:.2%}"
+                    )
+
+                    st.subheader(
+                        "Prediction probabilities"
+                    )
+
+                    st.dataframe(
+                        probability_df,
+                        use_container_width=True,
+                        hide_index=True,
+                    )
 
                 st.warning(
                     "This is a text-classification prediction, "
                     "not a medical diagnosis. It may be incorrect "
-                    "and should not be used to make health decisions."
+                    "and must not be used to make health decisions."
                 )
 
             except Exception as exc:
@@ -703,6 +730,10 @@ elif page == "Dataset Overview":
     st.title(
         "📊 Dataset Overview"
     )
+
+    # --------------------------------------------------------
+    # Metrics
+    # --------------------------------------------------------
 
     c1, c2, c3, c4 = st.columns(4)
 
@@ -727,8 +758,12 @@ elif page == "Dataset Overview":
     )
 
     st.subheader(
-        "Category distribution"
+        "Category Distribution"
     )
+
+    # --------------------------------------------------------
+    # Category counts
+    # --------------------------------------------------------
 
     counts = (
         df["status"]
@@ -754,9 +789,7 @@ elif page == "Dataset Overview":
         "Number of statements"
     )
 
-    ax.set_ylabel(
-        ""
-    )
+    ax.set_ylabel("")
 
     fig.tight_layout()
 
@@ -764,12 +797,14 @@ elif page == "Dataset Overview":
         fig
     )
 
-    plt.close(
-        fig
-    )
+    plt.close(fig)
+
+    # --------------------------------------------------------
+    # Sample data
+    # --------------------------------------------------------
 
     st.subheader(
-        "Sample records"
+        "Sample Records"
     )
 
     st.dataframe(
@@ -795,29 +830,92 @@ elif page == "Model Information":
         "📈 Model Information"
     )
 
-    st.markdown(
-        """
-        **Selected model:** Logistic Regression
+    st.subheader(
+        "Selected Model"
+    )
 
-        **Text representation:** TF-IDF (unigrams and bigrams)
+    st.write(
+        "Logistic Regression"
+    )
 
-        **Selection basis:** The original notebook selected
-        Logistic Regression as the best model using Macro F1-score
-        on its held-out test set.
+    st.subheader(
+        "Text Representation"
+    )
 
-        Recorded notebook results:
+    st.write(
+        "TF-IDF using unigrams and bigrams."
+    )
 
-        - Accuracy: **0.77**
-        - Macro F1-score: **0.71**
-        - Weighted F1-score: **0.77**
-        """
+    st.subheader(
+        "Model Configuration"
+    )
+
+    model_config = pd.DataFrame(
+        [
+            {
+                "Parameter": "Algorithm",
+                "Value": "Logistic Regression",
+            },
+            {
+                "Parameter": "Text representation",
+                "Value": "TF-IDF",
+            },
+            {
+                "Parameter": "N-gram range",
+                "Value": "(1, 2)",
+            },
+            {
+                "Parameter": "Maximum features",
+                "Value": "12,000",
+            },
+            {
+                "Parameter": "Minimum document frequency",
+                "Value": "2",
+            },
+            {
+                "Parameter": "Class weight",
+                "Value": "balanced",
+            },
+            {
+                "Parameter": "Maximum iterations",
+                "Value": "1,000",
+            },
+        ]
+    )
+
+    st.dataframe(
+        model_config,
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    st.subheader(
+        "Recorded Notebook Results"
+    )
+
+    r1, r2, r3 = st.columns(3)
+
+    r1.metric(
+        "Accuracy",
+        "0.77"
+    )
+
+    r2.metric(
+        "Macro F1-score",
+        "0.71"
+    )
+
+    r3.metric(
+        "Weighted F1-score",
+        "0.77"
     )
 
     st.info(
-        "The model trained by this app uses the full cleaned "
-        "dataset. The metrics above are recorded notebook "
-        "results and are not a new evaluation of this "
-        "app-trained model."
+        "These metrics are the recorded held-out test results "
+        "from the original notebook. The model trained by this "
+        "Streamlit app uses the full cleaned dataset, so these "
+        "values should not be interpreted as a fresh evaluation "
+        "of the deployed model."
     )
 
 
@@ -832,10 +930,12 @@ elif page == "Model Evaluation":
     )
 
     st.caption(
-        "These are the recorded held-out test results from "
-        "the notebook. They are displayed for reference; "
-        "this page does not retrain or re-evaluate the models."
+        "Recorded held-out test results from the original notebook."
     )
+
+    # --------------------------------------------------------
+    # Model comparison
+    # --------------------------------------------------------
 
     comparison = pd.DataFrame(
         [
@@ -897,7 +997,7 @@ elif page == "Model Evaluation":
     )
 
     st.subheader(
-        "Comparison of six machine-learning models"
+        "Comparison of Six Machine-Learning Models"
     )
 
     st.dataframe(
@@ -915,8 +1015,12 @@ elif page == "Model Evaluation":
         hide_index=True,
     )
 
+    # --------------------------------------------------------
+    # Macro F1 chart
+    # --------------------------------------------------------
+
     st.subheader(
-        "Macro F1-score comparison"
+        "Macro F1-score Comparison"
     )
 
     chart_df = (
@@ -934,11 +1038,11 @@ elif page == "Model Evaluation":
     )
 
     # --------------------------------------------------------
-    # Classification Report
+    # Classification report
     # --------------------------------------------------------
 
     st.subheader(
-        "Classification report — Logistic Regression"
+        "Classification Report — Logistic Regression"
     )
 
     report = pd.DataFrame(
@@ -1009,21 +1113,21 @@ elif page == "Model Evaluation":
 
     st.markdown(
         """
-        **Overall test results:**
+        **Overall test results**
 
-        Accuracy **0.77** ·
-        Macro F1-score **0.71** ·
-        Weighted F1-score **0.77** ·
-        Test samples **10,218**
+        - Accuracy: **0.77**
+        - Macro F1-score: **0.71**
+        - Weighted F1-score: **0.77**
+        - Test samples: **10,218**
         """
     )
 
     # --------------------------------------------------------
-    # Confusion Matrix
+    # Confusion matrix
     # --------------------------------------------------------
 
     st.subheader(
-        "Confusion matrix — Logistic Regression"
+        "Confusion Matrix — Logistic Regression"
     )
 
     cm_path = (
@@ -1045,13 +1149,13 @@ elif page == "Model Evaluation":
     else:
 
         st.info(
-            "The confusion matrix image is not in the "
-            "project folder. Add confusion_matrix.png "
-            "beside app.py to display it."
+            "The confusion matrix image was not found. "
+            "Add 'confusion_matrix.png' beside app.py "
+            "if you want to display it."
         )
 
     st.warning(
-        "These values are recorded notebook results, "
+        "These are machine-learning evaluation results, "
         "not a medical assessment. Predictions must not "
         "be used to diagnose mental health conditions."
     )
@@ -1067,22 +1171,51 @@ elif page == "About":
         "ℹ️ About Mental Health Sentiment Analysis"
     )
 
+    st.subheader(
+        "Project"
+    )
+
+    st.write(
+        "Mental Health Sentiment Analysis"
+    )
+
+    st.subheader(
+        "Description"
+    )
+
+    st.write(
+        "Text Analysis Using Machine Learning and NLP"
+    )
+
+    st.subheader(
+        "Technologies"
+    )
+
     st.markdown(
         """
-        **Project:** Mental Health Sentiment Analysis
-
-        **Description:** Text Analysis Using Machine Learning and NLP
-
-        **Technologies:** Python, Pandas, Scikit-learn, TF-IDF,
-        Logistic Regression, Streamlit.
-
-        **Purpose:** Demonstrate supervised text classification
-        using the labels present in the dataset.
+        - Python
+        - Pandas
+        - Scikit-learn
+        - TF-IDF
+        - Logistic Regression
+        - Streamlit
+        - Matplotlib
+        - Seaborn
         """
+    )
+
+    st.subheader(
+        "Purpose"
+    )
+
+    st.write(
+        "The purpose of this project is to demonstrate "
+        "supervised text classification using the labels "
+        "present in the dataset."
     )
 
     st.warning(
         "This project is for educational demonstration only. "
-        "It does not diagnose mental health conditions or "
-        "replace assessment by a qualified professional."
+        "It does not diagnose mental health conditions and "
+        "does not replace assessment by a qualified professional."
     )
