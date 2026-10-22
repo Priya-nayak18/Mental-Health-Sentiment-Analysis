@@ -13,20 +13,15 @@ from sklearn.linear_model import LogisticRegression
 
 
 # ============================================================
-# PAGE SETTINGS
+# SETTINGS
 # ============================================================
 
 st.set_page_config(
     page_title="Mental Health Sentiment Analysis",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
-
-# ============================================================
-# PATHS AND GOOGLE DRIVE SETTINGS
-# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -47,254 +42,194 @@ st.markdown(
     """
     <style>
 
-    /* --------------------------------------------------------
-       MAIN APPLICATION
-    -------------------------------------------------------- */
+    /* -----------------------------
+       MAIN APP
+    ----------------------------- */
 
     .stApp {
-        background:
-            linear-gradient(
-                135deg,
-                #f8f7ff 0%,
-                #f5fbff 100%
-            );
+        background: linear-gradient(
+            135deg,
+            #f8f7ff 0%,
+            #f5fbff 100%
+        );
     }
 
 
-    /* --------------------------------------------------------
+    /* -----------------------------
        SIDEBAR
-    -------------------------------------------------------- */
+    ----------------------------- */
 
     [data-testid="stSidebar"] {
-        background:
-            linear-gradient(
-                180deg,
-                #f0efff 0%,
-                #f4f3ff 100%
-            );
-        border-right: 1px solid #e1def5;
+        background: #f0efff;
     }
 
     [data-testid="stSidebar"] h1 {
         color: #25275f;
-        font-weight: 700;
-    }
-
-    [data-testid="stSidebar"] p {
-        color: #77798e;
+        font-size: 1.55rem;
     }
 
 
-    /* --------------------------------------------------------
-       SIDEBAR NAVIGATION
-    -------------------------------------------------------- */
+    /* -----------------------------
+       HERO
+    ----------------------------- */
 
-    [data-testid="stSidebar"] .stRadio label {
-        font-size: 16px;
-        color: #34364a;
-    }
-
-
-    /* --------------------------------------------------------
-       HERO SECTION
-    -------------------------------------------------------- */
-
-    .hero-container {
-        padding: 2.8rem 2.8rem;
+    .hero {
+        padding: 2.7rem 2.8rem;
         border-radius: 24px;
 
-        background:
-            linear-gradient(
-                120deg,
-                #e9e7ff 0%,
-                #e5f7f4 100%
-            );
+        background: linear-gradient(
+            120deg,
+            #e9e7ff,
+            #e5f7f4
+        );
 
         border: 1px solid #dedcf5;
 
-        box-shadow:
-            0 8px 25px rgba(50, 50, 100, 0.04);
-
         margin-bottom: 2rem;
+
+        box-shadow: 0 8px 25px rgba(60, 60, 120, 0.06);
     }
 
 
     .hero-title {
-        font-size: 3.2rem;
+        font-size: 3.15rem;
         font-weight: 800;
-        color: #292c6b;
         line-height: 1.15;
-        margin-bottom: 0.8rem;
-    }
-
-
-    .hero-subtitle {
-        font-size: 1.15rem;
-        color: #555a73;
-        margin-top: 0.5rem;
+        color: #25275f;
+        margin-bottom: 1rem;
     }
 
 
     .hero-icon {
-        font-size: 4rem;
-        margin-right: 0.5rem;
+        font-size: 3.5rem;
+        margin-right: 0.45rem;
     }
 
 
-    /* --------------------------------------------------------
-       PAGE TITLE
-    -------------------------------------------------------- */
-
-    .page-title {
-        font-size: 2.4rem;
-        font-weight: 750;
-        color: #292c6b;
-        margin-bottom: 0.4rem;
-    }
-
-
-    .page-subtitle {
-        color: #6e7187;
-        font-size: 1.05rem;
-        margin-bottom: 1.5rem;
-    }
-
-
-    /* --------------------------------------------------------
-       WELCOME CARD
-    -------------------------------------------------------- */
-
-    .welcome-card {
-        background: rgba(255, 255, 255, 0.85);
-        border: 1px solid #dedcf5;
-        border-radius: 18px;
-        padding: 1.5rem 1.7rem;
-        margin-bottom: 1.8rem;
-
-        box-shadow:
-            0 5px 20px rgba(50, 50, 100, 0.03);
-    }
-
-
-    .welcome-title {
+    .hero-subtitle {
         font-size: 1.25rem;
+        color: #5f6280;
+        margin-top: 0.8rem;
+    }
+
+
+    /* -----------------------------
+       SECTION TITLE
+    ----------------------------- */
+
+    .section-title {
+        font-size: 2rem;
+        font-weight: 750;
+        color: #25275f;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+
+
+    /* -----------------------------
+       STEPS
+    ----------------------------- */
+
+    .steps {
+        font-size: 1.1rem;
+        line-height: 1.9;
+        color: #34364a;
+        padding-left: 1.5rem;
+    }
+
+
+    .steps li {
+        margin-bottom: 0.45rem;
+    }
+
+
+    /* -----------------------------
+       INFO CARDS
+    ----------------------------- */
+
+    .info-card {
+        padding: 1.4rem;
+        border-radius: 16px;
+        background: white;
+        border: 1px solid #e2e0f5;
+        margin-bottom: 1rem;
+    }
+
+
+    .info-card-title {
+        font-size: 1.2rem;
         font-weight: 700;
-        color: #30334b;
-        margin-bottom: 0.7rem;
+        color: #25275f;
+        margin-bottom: 0.5rem;
     }
 
 
-    .welcome-text {
+    .info-card-text {
+        color: #55586f;
+        line-height: 1.6;
+    }
+
+
+    /* -----------------------------
+       PREDICTION RESULT
+    ----------------------------- */
+
+    .prediction-card {
+        padding: 1.7rem;
+        border-radius: 18px;
+        background: linear-gradient(
+            120deg,
+            #eeeaff,
+            #e9faf7
+        );
+        border: 1px solid #dddaf4;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+
+    .prediction-title {
         font-size: 1rem;
-        color: #45485c;
-        line-height: 1.7;
+        color: #666985;
+        margin-bottom: 0.3rem;
     }
 
 
-    /* --------------------------------------------------------
+    .prediction-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #25275f;
+    }
+
+
+    /* -----------------------------
        BUTTON
-    -------------------------------------------------------- */
+    ----------------------------- */
 
     div.stButton > button {
         border-radius: 10px;
-        font-weight: 650;
-
-        background:
-            linear-gradient(
-                90deg,
-                #625cf6,
-                #716cf8
-            );
-
+        font-weight: 600;
+        background: #625cf6;
         color: white;
-        border: none;
-
-        padding: 0.7rem 1.2rem;
-
-        transition:
-            transform 0.15s ease,
-            box-shadow 0.15s ease;
+        border: 0;
+        min-height: 45px;
     }
 
 
     div.stButton > button:hover {
-        transform: translateY(-1px);
-
-        box-shadow:
-            0 5px 15px rgba(98, 92, 246, 0.25);
+        background: #514be4;
+        color: white;
     }
 
 
-    /* --------------------------------------------------------
-       TEXT AREA
-    -------------------------------------------------------- */
-
-    textarea {
-        border-radius: 12px !important;
-    }
-
-
-    /* --------------------------------------------------------
-       METRICS
-    -------------------------------------------------------- */
-
-    [data-testid="stMetric"] {
-        background: transparent;
-        padding: 0.4rem 0.2rem;
-    }
-
-    [data-testid="stMetricLabel"] {
-        color: #55586c;
-        font-size: 0.95rem;
-    }
-
-    [data-testid="stMetricValue"] {
-        color: #30334b;
-        font-weight: 600;
-    }
-
-
-    /* --------------------------------------------------------
-       DATAFRAME
-    -------------------------------------------------------- */
-
-    [data-testid="stDataFrame"] {
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-
-    /* --------------------------------------------------------
-       INFO / WARNING / SUCCESS BOXES
-    -------------------------------------------------------- */
-
-    .stAlert {
-        border-radius: 12px;
-    }
-
-
-    /* --------------------------------------------------------
-       SECTION HEADINGS
-    -------------------------------------------------------- */
+    /* -----------------------------
+       GENERAL HEADINGS
+    ----------------------------- */
 
     h1, h2, h3 {
-        color: #30334b;
+        color: #25275f;
     }
 
-
-    /* --------------------------------------------------------
-       FOOTER
-    -------------------------------------------------------- */
-
-    .footer {
-        margin-top: 3rem;
-        padding-top: 1.5rem;
-        border-top: 1px solid #deddea;
-
-        color: #77798e;
-        font-size: 0.9rem;
-        text-align: center;
-    }
 
     </style>
     """,
@@ -308,24 +243,26 @@ st.markdown(
 
 def clean_text(text):
     """
-    Basic text cleaning used before TF-IDF transformation.
+    Clean a text statement before sending it to the model.
     """
 
     text = str(text).lower()
 
+    # Remove URLs
     text = re.sub(
         r"https?://\S+|www\.\S+",
         " ",
-        text,
+        text
     )
 
+    # Normalize whitespace
     text = re.sub(
         r"\s+",
         " ",
-        text,
-    )
+        text
+    ).strip()
 
-    return text.strip()
+    return text
 
 
 # ============================================================
@@ -335,22 +272,19 @@ def clean_text(text):
 @st.cache_data(show_spinner=False)
 def load_dataset():
 
+    # Create data directory if it doesn't exist
     DATA_DIR.mkdir(
         parents=True,
-        exist_ok=True,
+        exist_ok=True
     )
 
     # --------------------------------------------------------
-    # Download dataset if it does not exist
+    # DOWNLOAD DATASET IF IT DOES NOT EXIST
     # --------------------------------------------------------
 
-    if (
-        not DATA_PATH.exists()
-        or DATA_PATH.stat().st_size == 0
-    ):
+    if not DATA_PATH.exists() or DATA_PATH.stat().st_size == 0:
 
         if not GOOGLE_DRIVE_FILE_ID:
-
             raise RuntimeError(
                 "Google Drive file ID is missing."
             )
@@ -363,12 +297,14 @@ def load_dataset():
 
                 # IMPORTANT:
                 # Do NOT use fuzzy=True.
-                # It causes an error with newer gdown versions.
-
+                #
+                # This avoids:
+                # download() got an unexpected keyword argument 'fuzzy'
+                #
                 result = gdown.download(
                     id=GOOGLE_DRIVE_FILE_ID,
                     output=str(DATA_PATH),
-                    quiet=False,
+                    quiet=False
                 )
 
         except Exception as exc:
@@ -385,13 +321,13 @@ def load_dataset():
 
             raise RuntimeError(
                 "Dataset download failed. "
-                "Please check the Google Drive file ID "
-                "and sharing permissions."
+                "Check that the Google Drive file is shared "
+                "and that the file ID is correct."
             )
 
 
     # --------------------------------------------------------
-    # Read CSV
+    # READ CSV
     # --------------------------------------------------------
 
     try:
@@ -403,28 +339,29 @@ def load_dataset():
     except Exception as exc:
 
         raise RuntimeError(
-            "Could not read the dataset as a CSV. "
-            "Make sure the Google Drive file is the correct CSV."
+            "Could not read the downloaded file as a CSV. "
+            "Make sure the Google Drive file is the correct "
+            "Combined Data.csv file."
         ) from exc
 
 
     # --------------------------------------------------------
-    # Remove unwanted index column
+    # REMOVE UNNAMED INDEX COLUMN
     # --------------------------------------------------------
 
     raw = raw.drop(
         columns=["Unnamed: 0"],
-        errors="ignore",
+        errors="ignore"
     )
 
 
     # --------------------------------------------------------
-    # Check required columns
+    # CHECK REQUIRED COLUMNS
     # --------------------------------------------------------
 
     required_columns = {
         "statement",
-        "status",
+        "status"
     }
 
     if not required_columns.issubset(
@@ -432,26 +369,25 @@ def load_dataset():
     ):
 
         raise ValueError(
-            "The CSV must contain the columns "
-            "'statement' and 'status'. "
+            "The CSV must contain 'statement' and 'status' columns. "
             f"Columns found: {list(raw.columns)}"
         )
 
 
     # --------------------------------------------------------
-    # Remove missing values
+    # REMOVE MISSING VALUES
     # --------------------------------------------------------
 
     raw = raw.dropna(
         subset=[
             "statement",
-            "status",
+            "status"
         ]
     ).copy()
 
 
     # --------------------------------------------------------
-    # Convert columns to strings
+    # CONVERT TO STRING
     # --------------------------------------------------------
 
     raw["statement"] = (
@@ -468,7 +404,7 @@ def load_dataset():
 
 
     # --------------------------------------------------------
-    # Remove empty rows
+    # REMOVE EMPTY VALUES
     # --------------------------------------------------------
 
     raw = raw[
@@ -479,19 +415,19 @@ def load_dataset():
 
 
     # --------------------------------------------------------
-    # Remove duplicates
+    # REMOVE DUPLICATES
     # --------------------------------------------------------
 
     raw = raw.drop_duplicates(
         subset=[
             "statement",
-            "status",
+            "status"
         ]
     ).copy()
 
 
     # --------------------------------------------------------
-    # Clean text
+    # CLEAN STATEMENTS
     # --------------------------------------------------------
 
     raw["clean_statement"] = (
@@ -500,13 +436,14 @@ def load_dataset():
     )
 
 
+    # Remove statements that became empty
     raw = raw[
         raw["clean_statement"].str.len() > 0
     ].copy()
 
 
     # --------------------------------------------------------
-    # Word count
+    # WORD COUNT
     # --------------------------------------------------------
 
     raw["word_count"] = (
@@ -516,12 +453,7 @@ def load_dataset():
     )
 
 
-    # --------------------------------------------------------
-    # Final validation
-    # --------------------------------------------------------
-
     if raw.empty:
-
         raise ValueError(
             "The dataset contains no valid records."
         )
@@ -540,7 +472,7 @@ def load_dataset():
 def load_or_train_model():
 
     # --------------------------------------------------------
-    # Try loading existing model
+    # TRY SAVED MODEL FIRST
     # --------------------------------------------------------
 
     if BUNDLE_PATH.exists():
@@ -554,7 +486,7 @@ def load_or_train_model():
             required_keys = {
                 "model",
                 "tfidf_vectorizer",
-                "feature_type",
+                "feature_type"
             }
 
             if (
@@ -568,11 +500,13 @@ def load_or_train_model():
 
         except Exception:
 
+            # If saved model is corrupted,
+            # train a new one.
             pass
 
 
     # --------------------------------------------------------
-    # Load dataset
+    # LOAD DATASET
     # --------------------------------------------------------
 
     df = load_dataset()
@@ -598,7 +532,7 @@ def load_or_train_model():
         ngram_range=(1, 2),
         min_df=2,
         sublinear_tf=True,
-        strip_accents="unicode",
+        strip_accents="unicode"
     )
 
 
@@ -606,67 +540,57 @@ def load_or_train_model():
         df["clean_statement"]
     )
 
-
     y = df["status"]
 
 
     # --------------------------------------------------------
-    # Logistic Regression
+    # LOGISTIC REGRESSION
     # --------------------------------------------------------
 
     model = LogisticRegression(
         max_iter=1000,
         class_weight="balanced",
-        random_state=42,
+        random_state=42
     )
 
 
     model.fit(
         X,
-        y,
+        y
     )
 
 
     # --------------------------------------------------------
-    # Model bundle
+    # MODEL BUNDLE
     # --------------------------------------------------------
 
     bundle = {
-
         "model": model,
-
-        "model_name":
-            "Logistic Regression",
-
-        "feature_type":
-            "tfidf",
-
-        "tfidf_vectorizer":
-            vectorizer,
-
-        "svd":
-            None,
-
-        "labels":
-            sorted(
-                y.unique()
-            ),
+        "model_name": "Logistic Regression",
+        "feature_type": "tfidf",
+        "tfidf_vectorizer": vectorizer,
+        "svd": None,
+        "labels": sorted(
+            y.unique()
+        )
     }
 
 
     # --------------------------------------------------------
-    # Save model
+    # SAVE MODEL
     # --------------------------------------------------------
 
     try:
 
         joblib.dump(
             bundle,
-            BUNDLE_PATH,
+            BUNDLE_PATH
         )
 
     except Exception:
 
+        # App can still work even if
+        # the environment doesn't allow writing.
         pass
 
 
@@ -680,39 +604,35 @@ def load_or_train_model():
 st.sidebar.markdown(
     """
     <div style="
-        font-size: 2rem;
-        margin-bottom: 0.2rem;
-    ">
-        🧠
-    </div>
-
-    <div style="
-        font-size: 1.45rem;
-        font-weight: 750;
+        font-size: 1.55rem;
+        font-weight: 800;
         color: #25275f;
-        line-height: 1.25;
+        line-height: 1.2;
     ">
-        Mental Health<br>
+        🧠 Mental Health<br>
         Sentiment Analysis
     </div>
-
-    <div style="
-        margin-top: 1rem;
-        color: #77798e;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    ">
-        Text Analysis Using Machine Learning and NLP
-    </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 
 st.sidebar.markdown(
-    "<br>",
-    unsafe_allow_html=True,
+    """
+    <div style="
+        color: #777991;
+        font-size: 0.95rem;
+        margin-top: 15px;
+        line-height: 1.5;
+    ">
+        Text Analysis Using Machine Learning and NLP
+    </div>
+    """,
+    unsafe_allow_html=True
 )
+
+
+st.sidebar.markdown("---")
 
 
 page = st.sidebar.radio(
@@ -723,32 +643,21 @@ page = st.sidebar.radio(
         "Dataset Overview",
         "Model Information",
         "Model Evaluation",
-        "About",
-    ],
+        "About"
+    ]
 )
 
 
-st.sidebar.markdown(
-    "---"
-)
+st.sidebar.markdown("---")
 
 
-st.sidebar.markdown(
-    """
-    <div style="
-        color: #77798e;
-        font-size: 0.9rem;
-        line-height: 1.6;
-    ">
-        Educational use only — not a medical diagnosis.
-    </div>
-    """,
-    unsafe_allow_html=True,
+st.sidebar.caption(
+    "Educational use only — not a medical diagnosis."
 )
 
 
 # ============================================================
-# LOAD DATASET
+# LOAD DATA
 # ============================================================
 
 try:
@@ -762,9 +671,9 @@ except Exception as exc:
     )
 
     st.info(
-        "Please check your Google Drive file ID, "
-        "sharing permissions, and confirm that the CSV "
-        "contains 'statement' and 'status' columns."
+        "Please check the Google Drive file ID, "
+        "sharing permissions, and confirm that the "
+        "file contains 'statement' and 'status' columns."
     )
 
     st.stop()
@@ -777,12 +686,12 @@ except Exception as exc:
 if page == "Home":
 
     # --------------------------------------------------------
-    # Hero
+    # HERO
     # --------------------------------------------------------
 
     st.markdown(
         """
-        <div class="hero-container">
+        <div class="hero">
 
             <div class="hero-title">
                 <span class="hero-icon">🧠</span>
@@ -796,64 +705,59 @@ if page == "Home":
 
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
 
     # --------------------------------------------------------
-    # Metrics
+    # STATISTICS
     # --------------------------------------------------------
 
     c1, c2, c3 = st.columns(3)
 
 
-    c1.metric(
-        "Records after cleaning",
-        f"{len(df):,}",
-    )
+    with c1:
+
+        st.metric(
+            "Records after cleaning",
+            f"{len(df):,}"
+        )
 
 
-    c2.metric(
-        "Dataset categories",
-        f"{df['status'].nunique():,}",
-    )
+    with c2:
+
+        st.metric(
+            "Dataset categories",
+            f"{df['status'].nunique():,}"
+        )
 
 
-    c3.metric(
-        "Average words per statement",
-        f"{df['word_count'].mean():.1f}",
-    )
+    with c3:
 
-
-    st.markdown(
-        "<br>",
-        unsafe_allow_html=True,
-    )
+        st.metric(
+            "Average words per statement",
+            f"{df['word_count'].mean():.1f}"
+        )
 
 
     # --------------------------------------------------------
-    # How it works
+    # HOW IT WORKS
     # --------------------------------------------------------
 
     st.markdown(
         """
-        <div class="page-title">
+        <div class="section-title">
             How it works
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
 
     st.markdown(
         """
-        <div style="
-            font-size: 1.05rem;
-            line-height: 2;
-            color: #45485c;
-        ">
+        <ol class="steps">
 
-        <ol>
             <li>
                 Enter a text statement on the
                 <b>Predict</b> page.
@@ -870,21 +774,20 @@ if page == "Home":
             </li>
 
             <li>
-                Logistic Regression predicts one
-                of the dataset's existing categories.
+                Logistic Regression predicts a
+                category from the dataset.
             </li>
-        </ol>
 
-        </div>
+        </ol>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
 
     st.info(
         "The first prediction may take some time because "
-        "the model may need to be trained. Once trained, "
-        "the saved model can be reused."
+        "the model may need to be trained. A saved model "
+        "may be reused when available."
     )
 
 
@@ -896,7 +799,7 @@ elif page == "Predict":
 
     st.markdown(
         """
-        <div class="hero-container">
+        <div class="hero">
 
             <div class="hero-title">
                 💬 Enter a text statement
@@ -908,23 +811,21 @@ elif page == "Predict":
 
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
 
     statement = st.text_area(
         "Your statement",
-        placeholder=(
-            "Type a statement here..."
-        ),
-        height=200,
-        max_chars=5000,
+        placeholder="Type a statement here...",
+        height=180,
+        max_chars=5000
     )
 
 
     if st.button(
         "Predict category",
-        use_container_width=True,
+        use_container_width=True
     ):
 
         if not statement.strip():
@@ -941,9 +842,7 @@ elif page == "Predict":
                     "Loading or training the model..."
                 ):
 
-                    bundle = (
-                        load_or_train_model()
-                    )
+                    bundle = load_or_train_model()
 
 
                     cleaned = clean_text(
@@ -954,7 +853,8 @@ elif page == "Predict":
                     features = (
                         bundle[
                             "tfidf_vectorizer"
-                        ].transform(
+                        ]
+                        .transform(
                             [cleaned]
                         )
                     )
@@ -967,11 +867,24 @@ elif page == "Predict":
 
 
                 # ------------------------------------------------
-                # Result
+                # RESULT
                 # ------------------------------------------------
 
-                st.success(
-                    f"Predicted dataset category: **{prediction}**"
+                st.markdown(
+                    f"""
+                    <div class="prediction-card">
+
+                        <div class="prediction-title">
+                            Predicted Dataset Category
+                        </div>
+
+                        <div class="prediction-value">
+                            {prediction}
+                        </div>
+
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
 
 
@@ -984,66 +897,10 @@ elif page == "Predict":
                 )
 
 
-                # ------------------------------------------------
-                # Probability if available
-                # ------------------------------------------------
-
-                model = bundle["model"]
-
-
-                if hasattr(
-                    model,
-                    "predict_proba",
-                ):
-
-                    probabilities = (
-                        model.predict_proba(
-                            features
-                        )[0]
-                    )
-
-
-                    classes = (
-                        model.classes_
-                    )
-
-
-                    probability_df = pd.DataFrame(
-                        {
-                            "Category":
-                                classes,
-
-                            "Probability":
-                                probabilities,
-                        }
-                    ).sort_values(
-                        "Probability",
-                        ascending=False,
-                    )
-
-
-                    st.subheader(
-                        "Prediction probabilities"
-                    )
-
-
-                    st.dataframe(
-                        probability_df.style.format(
-                            {
-                                "Probability":
-                                    "{:.2%}"
-                            }
-                        ),
-                        use_container_width=True,
-                        hide_index=True,
-                    )
-
-
                 st.warning(
-                    "This is a text-classification "
-                    "prediction, not a medical diagnosis. "
-                    "It may be incorrect and must not be "
-                    "used to make health decisions."
+                    "This is a text-classification prediction, "
+                    "not a medical diagnosis. It may be incorrect "
+                    "and should not be used to make health decisions."
                 )
 
 
@@ -1060,49 +917,52 @@ elif page == "Predict":
 
 elif page == "Dataset Overview":
 
-    st.markdown(
-        """
-        <div class="page-title">
-            📊 Dataset Overview
-        </div>
-
-        <div class="page-subtitle">
-            Summary of the cleaned dataset used by the application.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-    c1, c2, c3, c4 = st.columns(4)
-
-
-    c1.metric(
-        "Records after cleaning",
-        f"{len(df):,}",
-    )
-
-
-    c2.metric(
-        "Categories",
-        f"{df['status'].nunique():,}",
-    )
-
-
-    c3.metric(
-        "Unique statements",
-        f"{df['statement'].nunique():,}",
-    )
-
-
-    c4.metric(
-        "Average words",
-        f"{df['word_count'].mean():.1f}",
+    st.title(
+        "📊 Dataset Overview"
     )
 
 
     # --------------------------------------------------------
-    # Category distribution
+    # STATISTICS
+    # --------------------------------------------------------
+
+    c1, c2, c3, c4 = st.columns(4)
+
+
+    with c1:
+
+        st.metric(
+            "Records after cleaning",
+            f"{len(df):,}"
+        )
+
+
+    with c2:
+
+        st.metric(
+            "Categories",
+            f"{df['status'].nunique():,}"
+        )
+
+
+    with c3:
+
+        st.metric(
+            "Unique statements",
+            f"{df['statement'].nunique():,}"
+        )
+
+
+    with c4:
+
+        st.metric(
+            "Average words",
+            f"{df['word_count'].mean():.1f}"
+        )
+
+
+    # --------------------------------------------------------
+    # CATEGORY DISTRIBUTION
     # --------------------------------------------------------
 
     st.subheader(
@@ -1121,7 +981,7 @@ elif page == "Dataset Overview":
 
 
     fig, ax = plt.subplots(
-        figsize=(10, 5)
+        figsize=(9, 5)
     )
 
 
@@ -1129,7 +989,7 @@ elif page == "Dataset Overview":
         data=counts,
         x="Count",
         y="Category",
-        ax=ax,
+        ax=ax
     )
 
 
@@ -1144,8 +1004,7 @@ elif page == "Dataset Overview":
 
 
     st.pyplot(
-        fig,
-        use_container_width=True,
+        fig
     )
 
 
@@ -1153,7 +1012,7 @@ elif page == "Dataset Overview":
 
 
     # --------------------------------------------------------
-    # Sample records
+    # SAMPLE RECORDS
     # --------------------------------------------------------
 
     st.subheader(
@@ -1166,13 +1025,11 @@ elif page == "Dataset Overview":
             [
                 "statement",
                 "status",
-                "word_count",
+                "word_count"
             ]
         ].head(15),
-
         use_container_width=True,
-
-        hide_index=True,
+        hide_index=True
     )
 
 
@@ -1182,59 +1039,94 @@ elif page == "Dataset Overview":
 
 elif page == "Model Information":
 
+    st.title(
+        "📈 Model Information"
+    )
+
+
     st.markdown(
         """
-        <div class="page-title">
-            📈 Model Information
+        <div class="info-card">
+
+            <div class="info-card-title">
+                Selected Model
+            </div>
+
+            <div class="info-card-text">
+                Logistic Regression
+            </div>
+
         </div>
 
-        <div class="page-subtitle">
-            Machine-learning model and text representation used
-            by the application.
+
+        <div class="info-card">
+
+            <div class="info-card-title">
+                Text Representation
+            </div>
+
+            <div class="info-card-text">
+                TF-IDF using unigrams and bigrams.
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-card-title">
+                Model Selection
+            </div>
+
+            <div class="info-card-text">
+                The original notebook selected Logistic
+                Regression as the best model using Macro
+                F1-score on its held-out test set.
+            </div>
+
         </div>
         """,
-        unsafe_allow_html=True,
+        unsafe_allow_html=True
     )
 
 
-    st.markdown(
-        """
-        ### Selected Model
-
-        **Logistic Regression**
-
-        ### Text Representation
-
-        **TF-IDF**
-
-        The application uses:
-
-        - Unigrams
-        - Bigrams
-        - Maximum 12,000 features
-        - Unicode accent stripping
-        - Sublinear TF scaling
-
-        ### Model Configuration
-
-        Logistic Regression is configured with:
-
-        - `max_iter = 1000`
-        - `class_weight = "balanced"`
-        - `random_state = 42`
-
-        ### Dataset Categories
-
-        The model predicts categories contained in the
-        dataset's `status` column.
-        """
+    st.subheader(
+        "Recorded notebook results"
     )
+
+
+    r1, r2, r3 = st.columns(3)
+
+
+    with r1:
+
+        st.metric(
+            "Accuracy",
+            "0.77"
+        )
+
+
+    with r2:
+
+        st.metric(
+            "Macro F1-score",
+            "0.71"
+        )
+
+
+    with r3:
+
+        st.metric(
+            "Weighted F1-score",
+            "0.77"
+        )
 
 
     st.info(
-        "The application trains the Logistic Regression model "
-        "using the cleaned dataset when a saved model bundle "
-        "is not available."
+        "The model trained by this app uses the full cleaned "
+        "dataset. The metrics above are recorded notebook "
+        "results and are not a new evaluation of this "
+        "app-trained model."
     )
 
 
@@ -1244,177 +1136,79 @@ elif page == "Model Information":
 
 elif page == "Model Evaluation":
 
-    st.markdown(
-        """
-        <div class="page-title">
-            📊 Model Evaluation
-        </div>
-
-        <div class="page-subtitle">
-            Recorded held-out test results from the original
-            notebook.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.title(
+        "📊 Model Evaluation"
     )
 
 
     st.caption(
-        "These values are displayed for reference. "
-        "This page does not retrain or re-evaluate the models."
+        "These are the recorded held-out test results "
+        "from the notebook. They are displayed for "
+        "reference; this page does not retrain or "
+        "re-evaluate the models."
     )
 
 
     # --------------------------------------------------------
-    # Model comparison
+    # MODEL COMPARISON
     # --------------------------------------------------------
 
     comparison = pd.DataFrame(
         [
-
             {
-                "Model":
-                    "Logistic Regression",
-
-                "Accuracy":
-                    0.7696,
-
-                "Precision (Macro)":
-                    0.6895,
-
-                "Recall (Macro)":
-                    0.7448,
-
-                "F1 Score (Macro)":
-                    0.7108,
-
-                "F1 Score (Weighted)":
-                    0.7695,
-
-                "Training Time (seconds)":
-                    14.53,
+                "Model": "Logistic Regression",
+                "Accuracy": 0.7696,
+                "Precision (Macro)": 0.6895,
+                "Recall (Macro)": 0.7448,
+                "F1 Score (Macro)": 0.7108,
+                "F1 Score (Weighted)": 0.7695,
+                "Training Time (seconds)": 14.53
             },
-
-
             {
-                "Model":
-                    "Linear SVM",
-
-                "Accuracy":
-                    0.7633,
-
-                "Precision (Macro)":
-                    0.7021,
-
-                "Recall (Macro)":
-                    0.6993,
-
-                "F1 Score (Macro)":
-                    0.6993,
-
-                "F1 Score (Weighted)":
-                    0.7610,
-
-                "Training Time (seconds)":
-                    10.06,
+                "Model": "Linear SVM",
+                "Accuracy": 0.7633,
+                "Precision (Macro)": 0.7021,
+                "Recall (Macro)": 0.6993,
+                "F1 Score (Macro)": 0.6993,
+                "F1 Score (Weighted)": 0.7610,
+                "Training Time (seconds)": 10.06
             },
-
-
             {
-                "Model":
-                    "Random Forest",
-
-                "Accuracy":
-                    0.7274,
-
-                "Precision (Macro)":
-                    0.7433,
-
-                "Recall (Macro)":
-                    0.5964,
-
-                "F1 Score (Macro)":
-                    0.6282,
-
-                "F1 Score (Weighted)":
-                    0.7209,
-
-                "Training Time (seconds)":
-                    34.78,
+                "Model": "Random Forest",
+                "Accuracy": 0.7274,
+                "Precision (Macro)": 0.7433,
+                "Recall (Macro)": 0.5964,
+                "F1 Score (Macro)": 0.6282,
+                "F1 Score (Weighted)": 0.7209,
+                "Training Time (seconds)": 34.78
             },
-
-
             {
-                "Model":
-                    "HistGradientBoosting",
-
-                "Accuracy":
-                    0.7019,
-
-                "Precision (Macro)":
-                    0.5894,
-
-                "Recall (Macro)":
-                    0.5230,
-
-                "F1 Score (Macro)":
-                    0.5441,
-
-                "F1 Score (Weighted)":
-                    0.6910,
-
-                "Training Time (seconds)":
-                    3.79,
+                "Model": "HistGradientBoosting",
+                "Accuracy": 0.7019,
+                "Precision (Macro)": 0.5894,
+                "Recall (Macro)": 0.5230,
+                "F1 Score (Macro)": 0.5441,
+                "F1 Score (Weighted)": 0.6910,
+                "Training Time (seconds)": 3.79
             },
-
-
             {
-                "Model":
-                    "Multinomial Naive Bayes",
-
-                "Accuracy":
-                    0.6951,
-
-                "Precision (Macro)":
-                    0.6316,
-
-                "Recall (Macro)":
-                    0.4720,
-
-                "F1 Score (Macro)":
-                    0.4949,
-
-                "F1 Score (Weighted)":
-                    0.6748,
-
-                "Training Time (seconds)":
-                    0.21,
+                "Model": "Multinomial Naive Bayes",
+                "Accuracy": 0.6951,
+                "Precision (Macro)": 0.6316,
+                "Recall (Macro)": 0.4720,
+                "F1 Score (Macro)": 0.4949,
+                "F1 Score (Weighted)": 0.6748,
+                "Training Time (seconds)": 0.21
             },
-
-
             {
-                "Model":
-                    "KNN",
-
-                "Accuracy":
-                    0.6491,
-
-                "Precision (Macro)":
-                    0.4980,
-
-                "Recall (Macro)":
-                    0.4676,
-
-                "F1 Score (Macro)":
-                    0.4704,
-
-                "F1 Score (Weighted)":
-                    0.6334,
-
-                "Training Time (seconds)":
-                    0.06,
-            },
-
+                "Model": "KNN",
+                "Accuracy": 0.6491,
+                "Precision (Macro)": 0.4980,
+                "Recall (Macro)": 0.4676,
+                "F1 Score (Macro)": 0.4704,
+                "F1 Score (Weighted)": 0.6334,
+                "Training Time (seconds)": 0.06
+            }
         ]
     )
 
@@ -1427,34 +1221,21 @@ elif page == "Model Evaluation":
     st.dataframe(
         comparison.style.format(
             {
-                "Accuracy":
-                    "{:.4f}",
-
-                "Precision (Macro)":
-                    "{:.4f}",
-
-                "Recall (Macro)":
-                    "{:.4f}",
-
-                "F1 Score (Macro)":
-                    "{:.4f}",
-
-                "F1 Score (Weighted)":
-                    "{:.4f}",
-
-                "Training Time (seconds)":
-                    "{:.2f}",
+                "Accuracy": "{:.4f}",
+                "Precision (Macro)": "{:.4f}",
+                "Recall (Macro)": "{:.4f}",
+                "F1 Score (Macro)": "{:.4f}",
+                "F1 Score (Weighted)": "{:.4f}",
+                "Training Time (seconds)": "{:.2f}"
             }
         ),
-
         use_container_width=True,
-
-        hide_index=True,
+        hide_index=True
     )
 
 
     # --------------------------------------------------------
-    # Macro F1
+    # MACRO F1 CHART
     # --------------------------------------------------------
 
     st.subheader(
@@ -1466,7 +1247,7 @@ elif page == "Model Evaluation":
         comparison[
             [
                 "Model",
-                "F1 Score (Macro)",
+                "F1 Score (Macro)"
             ]
         ]
         .set_index("Model")
@@ -1479,7 +1260,7 @@ elif page == "Model Evaluation":
 
 
     # --------------------------------------------------------
-    # Classification report
+    # CLASSIFICATION REPORT
     # --------------------------------------------------------
 
     st.subheader(
@@ -1489,132 +1270,55 @@ elif page == "Model Evaluation":
 
     report = pd.DataFrame(
         [
-
             {
-                "Category":
-                    "Anxiety",
-
-                "Precision":
-                    0.75,
-
-                "Recall":
-                    0.82,
-
-                "F1-score":
-                    0.78,
-
-                "Support":
-                    725,
+                "Category": "Anxiety",
+                "Precision": 0.75,
+                "Recall": 0.82,
+                "F1-score": 0.78,
+                "Support": 725
             },
-
-
             {
-                "Category":
-                    "Bipolar",
-
-                "Precision":
-                    0.73,
-
-                "Recall":
-                    0.78,
-
-                "F1-score":
-                    0.75,
-
-                "Support":
-                    500,
+                "Category": "Bipolar",
+                "Precision": 0.73,
+                "Recall": 0.78,
+                "F1-score": 0.75,
+                "Support": 500
             },
-
-
             {
-                "Category":
-                    "Depression",
-
-                "Precision":
-                    0.80,
-
-                "Recall":
-                    0.62,
-
-                "F1-score":
-                    0.70,
-
-                "Support":
-                    3019,
+                "Category": "Depression",
+                "Precision": 0.80,
+                "Recall": 0.62,
+                "F1-score": 0.70,
+                "Support": 3019
             },
-
-
             {
-                "Category":
-                    "Normal",
-
-                "Precision":
-                    0.90,
-
-                "Recall":
-                    0.93,
-
-                "F1-score":
-                    0.91,
-
-                "Support":
-                    3208,
+                "Category": "Normal",
+                "Precision": 0.90,
+                "Recall": 0.93,
+                "F1-score": 0.91,
+                "Support": 3208
             },
-
-
             {
-                "Category":
-                    "Personality disorder",
-
-                "Precision":
-                    0.48,
-
-                "Recall":
-                    0.60,
-
-                "F1-score":
-                    0.53,
-
-                "Support":
-                    179,
+                "Category": "Personality disorder",
+                "Precision": 0.48,
+                "Recall": 0.60,
+                "F1-score": 0.53,
+                "Support": 179
             },
-
-
             {
-                "Category":
-                    "Stress",
-
-                "Precision":
-                    0.49,
-
-                "Recall":
-                    0.70,
-
-                "F1-score":
-                    0.58,
-
-                "Support":
-                    459,
+                "Category": "Stress",
+                "Precision": 0.49,
+                "Recall": 0.70,
+                "F1-score": 0.58,
+                "Support": 459
             },
-
-
             {
-                "Category":
-                    "Suicidal",
-
-                "Precision":
-                    0.68,
-
-                "Recall":
-                    0.76,
-
-                "F1-score":
-                    0.72,
-
-                "Support":
-                    2128,
-            },
-
+                "Category": "Suicidal",
+                "Precision": 0.68,
+                "Recall": 0.76,
+                "F1-score": 0.72,
+                "Support": 2128
+            }
         ]
     )
 
@@ -1622,37 +1326,30 @@ elif page == "Model Evaluation":
     st.dataframe(
         report.style.format(
             {
-                "Precision":
-                    "{:.2f}",
-
-                "Recall":
-                    "{:.2f}",
-
-                "F1-score":
-                    "{:.2f}",
+                "Precision": "{:.2f}",
+                "Recall": "{:.2f}",
+                "F1-score": "{:.2f}"
             }
         ),
-
         use_container_width=True,
-
-        hide_index=True,
+        hide_index=True
     )
 
 
     st.markdown(
         """
-        **Overall test results**
+        **Overall test results:**
 
-        Accuracy: **0.77** ·
-        Macro F1-score: **0.71** ·
-        Weighted F1-score: **0.77** ·
-        Test samples: **10,218**
+        Accuracy **0.77** ·
+        Macro F1-score **0.71** ·
+        Weighted F1-score **0.77** ·
+        Test samples **10,218**
         """
     )
 
 
     # --------------------------------------------------------
-    # Confusion matrix
+    # CONFUSION MATRIX
     # --------------------------------------------------------
 
     st.subheader(
@@ -1670,13 +1367,11 @@ elif page == "Model Evaluation":
 
         st.image(
             str(cm_path),
-
             caption=(
                 "Confusion matrix from the notebook's "
                 "held-out test set"
             ),
-
-            use_container_width=True,
+            use_container_width=True
         )
 
     else:
@@ -1701,58 +1396,72 @@ elif page == "Model Evaluation":
 
 elif page == "About":
 
-    st.markdown(
-        """
-        <div class="page-title">
-            ℹ️ About Mental Health Sentiment Analysis
-        </div>
-
-        <div class="page-subtitle">
-            Information about the project and its purpose.
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.title(
+        "ℹ️ About Mental Health Sentiment Analysis"
     )
 
 
     st.markdown(
         """
-        ### Project
+        <div class="info-card">
 
-        **Mental Health Sentiment Analysis**
+            <div class="info-card-title">
+                Project
+            </div>
 
-        ### Description
+            <div class="info-card-text">
+                Mental Health Sentiment Analysis
+            </div>
 
-        Text Analysis Using Machine Learning and NLP.
+        </div>
 
-        ### Technologies
 
-        - Python
-        - Pandas
-        - Scikit-learn
-        - TF-IDF
-        - Logistic Regression
-        - Streamlit
-        - Matplotlib
-        - Seaborn
+        <div class="info-card">
 
-        ### Purpose
+            <div class="info-card-title">
+                Description
+            </div>
 
-        The purpose of this project is to demonstrate
-        supervised text classification using the labels
-        present in the dataset.
+            <div class="info-card-text">
+                Text Analysis Using Machine Learning and NLP
+            </div>
 
-        The application converts text into TF-IDF numerical
-        features and uses Logistic Regression to predict
-        one of the categories found in the dataset.
-        """
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-card-title">
+                Technologies
+            </div>
+
+            <div class="info-card-text">
+                Python, Pandas, Scikit-learn, TF-IDF,
+                Logistic Regression, Streamlit and Seaborn.
+            </div>
+
+        </div>
+
+
+        <div class="info-card">
+
+            <div class="info-card-title">
+                Purpose
+            </div>
+
+            <div class="info-card-text">
+                Demonstrate supervised text classification
+                using the labels present in the dataset.
+            </div>
+
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 
     st.warning(
         "This project is for educational demonstration only. "
-        "It does not diagnose mental health conditions and "
-        "does not replace assessment by a qualified professional."
+        "It does not diagnose mental health conditions or "
+        "replace assessment by a qualified professional."
     )
-
-
